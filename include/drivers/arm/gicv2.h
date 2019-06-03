@@ -8,7 +8,6 @@
 #define GICV2_H
 
 #include <drivers/arm/gic_common.h>
-
 /*******************************************************************************
  * GICv2 miscellaneous definitions
  ******************************************************************************/
@@ -135,6 +134,14 @@
  * The 'gicc_base' field contains the base address of the CPU Interface
  * programmer's view.
  *
+ * The 'g0_interrupt_array' field is a pointer to an array in which each entry
+ * corresponds to an ID of a Group 0 interrupt. This field is ignored when
+ * 'interrupt_props' field is used. This field is deprecated.
+ *
+ * The 'g0_interrupt_num' field contains the number of entries in the
+ * 'g0_interrupt_array'. This field is ignored when 'interrupt_props' field is
+ * used. This field is deprecated.
+ *
  * The 'target_masks' is a pointer to an array containing 'target_masks_num'
  * elements. The GIC driver will populate the array with per-PE target mask to
  * use to when targeting interrupts.
@@ -150,6 +157,10 @@
 typedef struct gicv2_driver_data {
 	uintptr_t gicd_base;
 	uintptr_t gicc_base;
+#if !ERROR_DEPRECATED
+	unsigned int g0_interrupt_num __deprecated;
+	const unsigned int *g0_interrupt_array __deprecated;
+#endif
 	unsigned int *target_masks;
 	unsigned int target_masks_num;
 	const interrupt_prop_t *interrupt_props;
