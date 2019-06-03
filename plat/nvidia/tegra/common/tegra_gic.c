@@ -6,12 +6,14 @@
 
 #include <arch_helpers.h>
 #include <assert.h>
-#include <bl_common.h>
-#include <debug.h>
-#include <interrupt_mgmt.h>
-#include <platform.h>
+#include <common/bl_common.h>
+#include <common/debug.h>
+#include <bl31/interrupt_mgmt.h>
+#include <plat/common/platform.h>
 #include <stdint.h>
 #include <tegra_def.h>
+#include <drivers/arm/gic_common.h>
+#include <drivers/arm/gic_v2.h>
 #include <tegra_private.h>
 
 /* Value used to initialize Non-Secure IRQ priorities four at a time */

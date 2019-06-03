@@ -9,7 +9,6 @@
 #include <cortex_a57.h>
 #include <common/bl_common.h>
 #include <common/debug.h>
-#include <common/interrupt_props.h>
 #include <drivers/console.h>
 #include <lib/xlat_tables/xlat_tables_v2.h>
 #include <drivers/arm/gic_common.h>
@@ -146,12 +145,6 @@ void plat_early_platform_setup(void)
 	}
 }
 
-/* Secure IRQs for Tegra186 */
-static const interrupt_prop_t tegra210_interrupt_props[] = {
-	INTR_PROP_DESC(TEGRA210_WDT_CPU_LEGACY_FIQ, GIC_HIGHEST_SEC_PRIORITY,
-			GICV2_INTR_GROUP0, GIC_INTR_CFG_EDGE),
-};
-
 void plat_late_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
@@ -207,14 +200,5 @@ void plat_late_platform_setup(void)
  ******************************************************************************/
 void plat_gic_setup(void)
 {
-	tegra_gic_setup(tegra210_interrupt_props, ARRAY_SIZE(tegra210_interrupt_props));
-
-	/* Enable handling for FIQs */
-	tegra_fiq_handler_setup();
-
-	/*
-	 * Enable routing watchdog FIQs from the flow controller to
-	 * the GICD.
-	 */
-	tegra_fc_enable_fiq_to_ccplex_routing();
+	tegra_gic_setup(NULL, 0);
 }

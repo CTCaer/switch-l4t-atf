@@ -6,9 +6,11 @@
 
 #include <arch.h>
 #include <assert.h>
-#include <gic_v2.h>
-#include <interrupt_mgmt.h>
-#include <mmio.h>
+#include <drivers/arm/gic_v2.h>
+#include <bl31/interrupt_mgmt.h>
+#include <lib/mmio.h>
+#define GIC_LOWEST_SEC_PRIORITY	U(127)
+#define GIC_LOWEST_NS_PRIORITY	U(254) /* 255 would disable an interrupt */
 
 /*******************************************************************************
  * GIC Distributor interface accessors for reading entire registers

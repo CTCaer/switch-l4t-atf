@@ -17,6 +17,7 @@ COMMON_DIR		:=	plat/nvidia/tegra/common
 BL31_SOURCES		+= 	drivers/console/aarch64/console.S		\
 				drivers/delay_timer/delay_timer.c		\
 				drivers/io/io_storage.c				\
+				drivers/arm/gic/gic_v2.c                        \
 				${COMMON_DIR}/aarch64/tegra_helpers.S		\
 				${COMMON_DIR}/drivers/pmc/pmc.c			\
 				${COMMON_DIR}/lib/debug/profiler.c		\

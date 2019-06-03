@@ -8,7 +8,7 @@
 #define __GIC_V2_H__
 
 /* The macros required here are additional to those in gic_common.h. */
-#include <gic_common.h>
+#include "gic_common.h"
 
 /******************************************************************************
  * THIS DRIVER IS DEPRECATED. For GICv2 systems, use the driver in gicv2.h
@@ -100,7 +100,7 @@
 
 #ifndef __ASSEMBLY__
 
-#include <mmio.h>
+#include <lib/mmio.h>
 #include <stdint.h>
 
 /*******************************************************************************
