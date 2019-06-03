@@ -18,8 +18,7 @@
 /******************************************************************************
  * Tegra common helper to setup the GICv2 driver data.
  *****************************************************************************/
-void tegra_gic_setup(const interrupt_prop_t *interrupt_props,
-		     unsigned int interrupt_props_num)
+void tegra_gic_setup(tegra_gic_cfg_t *cfg)
 {
 	/*
 	 * Tegra GIC configuration settings
@@ -31,8 +30,8 @@ void tegra_gic_setup(const interrupt_prop_t *interrupt_props,
 	 */
 	tegra_gic_data.gicd_base = TEGRA_GICD_BASE;
 	tegra_gic_data.gicc_base = TEGRA_GICC_BASE;
-	tegra_gic_data.interrupt_props = interrupt_props;
-	tegra_gic_data.interrupt_props_num = interrupt_props_num;
+	tegra_gic_data.g0_interrupt_num = cfg->g0_int_num;
+	tegra_gic_data.g0_interrupt_array = cfg->g0_int_array;
 	gicv2_driver_init(&tegra_gic_data);
 }
 

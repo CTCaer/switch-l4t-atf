@@ -11,7 +11,7 @@
 #include <bl31/interrupt_mgmt.h>
 #include <common/bl_common.h>
 #include <common/debug.h>
-#include <common/interrupt_props.h>
+#include <interrupt_mgmt.h>
 #include <context.h>
 #include <cortex_a57.h>
 #include <denver.h>

@@ -14,7 +14,6 @@
 #include <lib/psci/psci.h>
 #include <lib/xlat_tables/xlat_tables_v2.h>
 
-#include <tegra_gic.h>
 
 /*******************************************************************************
  * Tegra DRAM memory base address
@@ -68,6 +67,29 @@ struct tegra_bl31_params {
        entry_point_info_t *bl33_ep_info;
        image_info_t *bl33_image_info;
 };
+/* Declarations for tegra_gic.c */
+/*******************************************************************************
+ * Per-CPU struct describing FIQ state to be stored
+ ******************************************************************************/
+typedef struct pcpu_fiq_state {
+	uint64_t elr_el3;
+	uint64_t spsr_el3;
+} pcpu_fiq_state_t;
+
+/*******************************************************************************
+ * Struct describing per-FIQ configuration settings
+ ******************************************************************************/
+typedef struct irq_sec_cfg {
+	/* IRQ number */
+	unsigned int irq;
+	/* Target CPUs servicing this interrupt */
+	unsigned int target_cpus;
+	/* type = INTR_TYPE_S_EL1 or INTR_TYPE_EL3 */
+	uint32_t type;
+} irq_sec_cfg_t;
+
+void tegra_gic_cpuif_deactivate(void);
+void tegra_gic_setup(const irq_sec_cfg_t *irq_sec_ptr, uint32_t num_irqs);
 
 /* Declarations for plat_psci_handlers.c */
 int32_t tegra_soc_validate_power_state(uint32_t power_state,
