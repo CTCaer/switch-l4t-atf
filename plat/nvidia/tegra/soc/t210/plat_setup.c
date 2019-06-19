@@ -19,6 +19,7 @@
 #include <flowctrl.h>
 #include <memctrl.h>
 #include <plat/common/platform.h>
+#include <pmc.h>
 #include <security_engine.h>
 #include <tegra_def.h>
 #include <tegra_platform.h>
@@ -148,12 +149,30 @@ void plat_early_platform_setup(void)
 void plat_late_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
-	uint64_t sc7entry_end, offset;
+	uint64_t warmboot_end, sc7entry_end, offset = 0;
 	int ret;
 	uint32_t val;
 
 	/* memmap TZDRAM area containing the SC7 Entry Firmware */
 	if (plat_params->sc7entry_fw_base && plat_params->sc7entry_fw_size) {
+		if (plat_params->warmboot_fw_base && plat_params->warmboot_fw_size) {
+			/* warmboot must be _before_ BL31 base */
+			assert(plat_params->tzdram_base > plat_params->warmboot_fw_base);
+
+			warmboot_end = plat_params->warmboot_fw_base +
+				       plat_params->warmboot_fw_size;
+			assert(warmboot_end < plat_params->tzdram_base);
+			offset = plat_params->tzdram_base - plat_params->warmboot_fw_base;
+			assert(offset == 0x80000); // 512 kb before bl31 base
+
+			ret = mmap_add_dynamic_region(plat_params->warmboot_fw_base,
+					plat_params->warmboot_fw_base,
+					plat_params->warmboot_fw_size,
+					MT_SECURE | MT_RO_DATA);
+			assert(ret == 0);
+
+			tegra_pmc_write_32(PMC_SCRATCH1, (uint32_t)plat_params->warmboot_fw_base);
+		}
 
 		assert(plat_params->sc7entry_fw_size <= TEGRA_IRAM_A_SIZE);
 
@@ -163,12 +182,12 @@ void plat_late_platform_setup(void)
 		 * exactly 1MB from BL31 base.
 		 */
 
-		/* sc7entry-fw must be _before_ BL31 base */
-		assert(plat_params->tzdram_base > plat_params->sc7entry_fw_base);
+		/* sc7entry-fw must be _before_ warmboot base */
+		assert(plat_params->tzdram_base - offset > plat_params->sc7entry_fw_base);
 
 		sc7entry_end = plat_params->sc7entry_fw_base +
 			       plat_params->sc7entry_fw_size;
-		assert(sc7entry_end < plat_params->tzdram_base);
+		assert(sc7entry_end < plat_params->tzdram_base - offset);
 
 		/* sc7entry-fw start must be exactly 1MB behind BL31 base */
 		offset = plat_params->tzdram_base - plat_params->sc7entry_fw_base;

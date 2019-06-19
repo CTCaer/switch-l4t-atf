@@ -49,6 +49,10 @@ typedef struct plat_params_from_bl2 {
 	uint64_t sc7entry_fw_size;
 	/* System Suspend Entry Firmware base address */
 	uint64_t sc7entry_fw_base;
+	/* System Suspend Exit Firmware size */
+	uint64_t warmboot_fw_size;
+	/* System Suspend Exit Firmware base address */
+	uint64_t warmboot_fw_base;
 } plat_params_from_bl2_t;
 
 /*******************************************************************************

@@ -18,6 +18,7 @@
 #define PMC_DPD_ENABLE_0			U(0x24)
 #define PMC_PWRGATE_STATUS			U(0x38)
 #define PMC_PWRGATE_TOGGLE			U(0x30)
+#define PMC_SCRATCH1				U(0x54)
 #define PMC_SECURE_SCRATCH0			U(0xb0)
 #define PMC_SECURE_SCRATCH5			U(0xc4)
 #define PMC_CRYPTO_OP_0				U(0xf4)
