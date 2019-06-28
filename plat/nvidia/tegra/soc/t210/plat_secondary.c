@@ -35,6 +35,9 @@ void plat_secondary_setup(void)
 	val = reset_addr >> 32;
 	mmio_write_32(TEGRA_SB_BASE + SB_AA64_RESET_HI, val & 0x7FF);
 
+	/* Switch: Allow non-secure writes to reset vectors for lp0exit */
+	mmio_clrbits_32(TEGRA_SB_BASE + SB_CSR, SB_CSR_NS_RST_VEC_WR_DIS);
+
 	/* configure PMC */
 	tegra_pmc_cpu_setup(reset_addr);
 	tegra_pmc_lock_cpu_vectors();
