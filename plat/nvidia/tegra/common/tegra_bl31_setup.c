@@ -173,6 +173,8 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	plat_bl31_params_from_bl2.sc7entry_fw_base = plat_params->sc7entry_fw_base;
 	plat_bl31_params_from_bl2.warmboot_fw_size = plat_params->warmboot_fw_size;
 	plat_bl31_params_from_bl2.warmboot_fw_base = plat_params->warmboot_fw_base;
+	plat_bl31_params_from_bl2.emc_table_size = plat_params->emc_table_size;
+	plat_bl31_params_from_bl2.emc_table_base = plat_params->emc_table_base;
 
 	/*
 	 * It is very important that we run either from TZDRAM or TZSRAM base.

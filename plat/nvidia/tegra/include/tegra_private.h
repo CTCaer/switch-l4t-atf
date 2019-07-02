@@ -53,6 +53,10 @@ typedef struct plat_params_from_bl2 {
 	uint64_t warmboot_fw_size;
 	/* System Suspend Exit Firmware base address */
 	uint64_t warmboot_fw_base;
+	/* EMC Table size */
+	uint64_t emc_table_size;
+	/* EMC Table base address */
+	uint64_t emc_table_base;
 } plat_params_from_bl2_t;
 
 /*******************************************************************************
