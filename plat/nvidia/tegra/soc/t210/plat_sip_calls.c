@@ -38,6 +38,73 @@
 #define TEGRA_SIP_PMC_COMMANDS		U(0xC2FFFE00)
 #define TEGRA_SIP_EMC_COMMANDS		U(0xC2FFFE01)
 
+#define ATMOSPHERE_COPY_TO_IRAM    U(0xC2FFFE02)
+#define ATMOSPHERE_DO_REBOOT    U(0xC2FFFE03)
+
+/*******************************************************************************
+ copy to iram smc implementation
+ ******************************************************************************/
+int ams_iram_copy(uint64_t dram_addr, uint64_t iram_addr, uint32_t size, uint32_t flag)
+{
+	// Error out if either address or the size isn't dword aligned
+	if (dram_addr & 3 || iram_addr & 3 || size & 3)
+		return -EINVAL;
+
+	uint64_t dram_page = dram_addr & ~0xfff; // align down
+	uint32_t dram_aligned_size = (size + (dram_addr - dram_page) + 0xfff) & ~0xfff; // align up, make sure to cover entire area.
+	mmap_add_dynamic_region(dram_page, dram_page, dram_aligned_size, MT_MEMORY | MT_RW | MT_NS | MT_EXECUTE_NEVER);
+
+	volatile uint32_t *src, *dst;
+	size_t num_dwords = size / 4;
+
+	if (flag == 0) { // write IRAM
+		src = (uint32_t*) dram_addr;
+		dst = (uint32_t*) iram_addr;
+	} else { // read iram
+		src = (uint32_t*) iram_addr;
+		dst = (uint32_t*) dram_addr;
+	}
+
+	for (size_t i = 0; i < num_dwords; i++)
+		dst[i] = src[i];
+
+	flush_dcache_range((uintptr_t)dst, size);
+	mmap_remove_dynamic_region(dram_page, dram_aligned_size);
+
+	return 0;
+}
+
+void ams_reboot_to_payload()
+{
+	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
+	uint32_t val;
+	// This is basically ripped out of exosphere - https://github.com/Atmosphere-NX/Atmosphere/blob/master/exosphere/src/configitem.c#L58
+
+	// Set reboot kind = warmboot. Make sure not to clobber the other bits in scratch0.
+	tegra_pmc_write_32(0x50, tegra_pmc_read_32(0x50) | 1);
+	// Patch SDRAM init to perform an SVC immediately after second write
+	tegra_pmc_write_32(0x234, 0x2E38DFFF);
+	tegra_pmc_write_32(0x238, 0x6001DC28);
+	// Set SVC handler to jump to reboot stub in IRAM.
+	tegra_pmc_write_32(0x120, 0x4003F000);
+	tegra_pmc_write_32(0x13C, 0x6000F208);
+
+	void *rebootstub_iram = (void *)(uintptr_t)(TEGRA_IRAM_BASE + 0x3F000);
+	memcpy(rebootstub_iram, (void*)plat_params->rebootstub_base, plat_params->rebootstub_size);
+
+	flush_dcache_range((uintptr_t)rebootstub_iram, plat_params->rebootstub_size);
+
+	/*
+	 * Mark PMC as accessible to the non-secure world since bootloaders
+	 * will need it to be accessible
+	 */
+	val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
+	val &= ~PMC_SECURITY_EN_BIT;
+	mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
+
+	tegra_pmc_system_reset();
+}
+
 /*******************************************************************************
  * This function is responsible for handling all T210 SiP calls
  ******************************************************************************/
@@ -102,6 +169,14 @@ int plat_sip_handler(uint32_t smc_fid,
 		}
 
 		break;
+
+	case ATMOSPHERE_COPY_TO_IRAM:
+		return ams_iram_copy(x1, x2, x3, x4);
+
+	case ATMOSPHERE_DO_REBOOT:
+		ams_reboot_to_payload();
+		break;
+
 	default:
 		ERROR("%s: unsupported function ID\n", __func__);
 		return -ENOTSUP;

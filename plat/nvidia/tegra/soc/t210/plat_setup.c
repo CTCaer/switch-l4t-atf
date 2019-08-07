@@ -149,19 +149,36 @@ void plat_early_platform_setup(void)
 void plat_late_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
-	uint64_t warmboot_end, sc7entry_end, offset = 0;
+	uint64_t rebootstub_end, warmboot_end, sc7entry_end, offset = 0;
 	int ret;
 	uint32_t val;
 
 	/* memmap TZDRAM area containing the SC7 Entry Firmware */
 	if (plat_params->sc7entry_fw_base && plat_params->sc7entry_fw_size) {
+		if (plat_params->rebootstub_base && plat_params->rebootstub_size) {
+			/* rebootstub must be _before_ BL31 base */
+			assert(plat_params->tzdram_base > plat_params->rebootstub_base);
+
+			rebootstub_end = plat_params->rebootstub_base +
+				       plat_params->rebootstub_size;
+			assert(rebootstub_end < plat_params->tzdram_base);
+			offset = plat_params->tzdram_base - plat_params->rebootstub_base;
+			assert(offset == 0x2000); // 8 kb before bl31 base
+
+			ret = mmap_add_dynamic_region(plat_params->rebootstub_base,
+					plat_params->rebootstub_base,
+					plat_params->rebootstub_size,
+					MT_SECURE | MT_RO_DATA);
+			assert(ret == 0);
+		}
+
 		if (plat_params->warmboot_fw_base && plat_params->warmboot_fw_size) {
-			/* warmboot must be _before_ BL31 base */
-			assert(plat_params->tzdram_base > plat_params->warmboot_fw_base);
+			/* warmboot must be _before_ rebootstub base */
+			assert(plat_params->tzdram_base - offset > plat_params->warmboot_fw_base);
 
 			warmboot_end = plat_params->warmboot_fw_base +
 				       plat_params->warmboot_fw_size;
-			assert(warmboot_end < plat_params->tzdram_base);
+			assert(warmboot_end < plat_params->tzdram_base - offset);
 			offset = plat_params->tzdram_base - plat_params->warmboot_fw_base;
 			assert(offset == 0x80000); // 512 kb before bl31 base
 
