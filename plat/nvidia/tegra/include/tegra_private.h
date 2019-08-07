@@ -57,6 +57,10 @@ typedef struct plat_params_from_bl2 {
 	uint64_t emc_table_size;
 	/* EMC Table base address */
 	uint64_t emc_table_base;
+	/* Rebootstub size */
+	uint64_t rebootstub_size;
+	/* Rebootstub base address */
+	uint64_t rebootstub_base;
 } plat_params_from_bl2_t;
 
 /*******************************************************************************
