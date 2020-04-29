@@ -370,9 +370,11 @@ int tegra_soc_pwr_domain_power_down_wfi(const psci_power_state_t *target_state)
 			tegra_fc_bpmp_off();
 
 			/* bond out IRAM banks B, C and D */
+			/* Switch: Don't do that cause we'll need these for reboot to payload
 			mmio_write_32(TEGRA_CAR_RESET_BASE + TEGRA_BOND_OUT_U,
 				IRAM_B_LOCK_BIT | IRAM_C_LOCK_BIT |
 				IRAM_D_LOCK_BIT);
+			*/
 
 			/* bond out APB/AHB DMAs */
 			mmio_write_32(TEGRA_CAR_RESET_BASE + TEGRA_BOND_OUT_H,
@@ -386,6 +388,15 @@ int tegra_soc_pwr_domain_power_down_wfi(const psci_power_state_t *target_state)
 			 * masters on the bus.
 			 */
 			tegra_reset_all_dma_masters();
+
+			/*
+			* Mark PMC as accessible to the non-secure world
+			 * to allow the COP to execute System Suspend
+			 * sequence
+			 */
+			val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
+			val &= ~PMC_SECURITY_EN_BIT;
+			mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
 
 			/* clean up IRAM of any cruft */
 			zeromem((void *)(uintptr_t)TEGRA_IRAM_BASE,
