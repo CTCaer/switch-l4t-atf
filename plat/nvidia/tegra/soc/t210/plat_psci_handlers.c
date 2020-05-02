@@ -37,7 +37,7 @@
 #define SCLK_BURST_POLICY_DEFAULT	0x10000000
 
 static int cpu_powergate_mask[PLATFORM_MAX_CPUS_PER_CLUSTER];
-static bool tegra_bpmp_available = true;
+static bool tegra_bpmp_available = false;
 
 int32_t tegra_soc_validate_power_state(unsigned int power_state,
 					psci_power_state_t *req_state)
