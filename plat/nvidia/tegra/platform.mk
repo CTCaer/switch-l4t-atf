@@ -37,6 +37,9 @@ WARMBOOT_ENABLE_DCACHE_EARLY := 1
 # remove the standard libc
 OVERRIDE_LIBC		:=	1
 
+# disable console prints
+DISABLE_CONSOLE		:=	0
+
 include plat/nvidia/tegra/common/tegra_common.mk
 include ${SOC_DIR}/platform_${TARGET_SOC}.mk
 

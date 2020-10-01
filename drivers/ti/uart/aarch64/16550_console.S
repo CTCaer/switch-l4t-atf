@@ -38,6 +38,7 @@
 	 * -----------------------------------------------
 	 */
 func console_16550_core_init
+#if !DISABLE_CONSOLE
 	/* Check the input base address */
 	cbz	x0, init_fail
 	/* Check baud rate and uart clock for sanity */
@@ -81,6 +82,10 @@ func console_16550_core_init
 init_fail:
 	mov	w0, #0
 	ret
+#else
+	mov	w0, #1
+	ret
+#endif /* DISABLE_CONSOLE */
 endfunc console_16550_core_init
 
 #if MULTI_CONSOLE_API
@@ -139,6 +144,7 @@ endfunc console_16550_register
 	 * --------------------------------------------------------
 	 */
 func console_16550_core_putc
+#if !DISABLE_CONSOLE
 #if ENABLE_ASSERTIONS
 	cmp	x1, #0
 	ASM_ASSERT(ne)
@@ -161,6 +167,7 @@ func console_16550_core_putc
 	cmp	w2, #(UARTLSR_TEMT | UARTLSR_THRE)
 	b.ne	2b
 	str	w0, [x1, #UARTTX]
+#endif /* DISABLE_CONSOLE */
 	ret
 endfunc console_16550_core_putc
 
@@ -238,6 +245,7 @@ endfunc console_16550_getc
 	 * ---------------------------------------------
 	 */
 func console_16550_core_flush
+#if !DISABLE_CONSOLE
 #if ENABLE_ASSERTIONS
 	cmp	x0, #0
 	ASM_ASSERT(ne)
@@ -248,6 +256,7 @@ func console_16550_core_flush
 	and	w1, w1, #(UARTLSR_TEMT | UARTLSR_THRE)
 	cmp	w1, #(UARTLSR_TEMT | UARTLSR_THRE)
 	b.ne	1b
+#endif /* DISABLE_CONSOLE */
 
 	mov	w0, #0
 	ret
