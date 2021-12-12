@@ -934,11 +934,11 @@ static void tegra_se_enable_clocks(void)
 	mmio_write_32(TEGRA_CAR_RESET_BASE + TEGRA_RST_DEVICES_W, val);
 
 	/*
-	 * Switch SE clock source to CLK_M, to make sure SE clock
+	 * Switch SE clock source to PLLP, to make sure SE clock
 	 * is on when saving SE context
 	 */
 	mmio_write_32(TEGRA_CAR_RESET_BASE + TEGRA_CLK_RST_CTL_CLK_SRC_SE,
-		SE_CLK_SRC_CLK_M);
+		SE_CLK_SRC_PLLP);
 
 	/* Enable SE clock */
 	val = mmio_read_32(TEGRA_CAR_RESET_BASE + TEGRA_CLK_OUT_ENB_V);
