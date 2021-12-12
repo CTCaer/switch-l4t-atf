@@ -202,7 +202,14 @@ void plat_enable_console(int32_t id)
  ******************************************************************************/
 struct tegra_bl31_params *plat_get_bl31_params(void)
 {
-	return NULL;
+	uint32_t val = mmio_read_32(TEGRA_PMC_BASE + PMC_SECURE_SCRATCH110);
+
+	if (val != SCRATCH_BL31_ENABLE_MAGIC)
+		return NULL;
+
+	val = mmio_read_32(TEGRA_PMC_BASE + PMC_SECURE_SCRATCH108);
+
+	return (struct tegra_bl31_params *)(uintptr_t)val;
 }
 
 /*******************************************************************************
@@ -210,7 +217,14 @@ struct tegra_bl31_params *plat_get_bl31_params(void)
  ******************************************************************************/
 plat_params_from_bl2_t *plat_get_bl31_plat_params(void)
 {
-	return NULL;
+	uint32_t val = mmio_read_32(TEGRA_PMC_BASE + PMC_SECURE_SCRATCH110);
+
+	if (val != SCRATCH_BL31_ENABLE_MAGIC)
+		return NULL;
+
+	val = mmio_read_32(TEGRA_PMC_BASE + PMC_SECURE_SCRATCH109);
+
+	return (plat_params_from_bl2_t *)(uintptr_t)val;
 }
 
 /*******************************************************************************
