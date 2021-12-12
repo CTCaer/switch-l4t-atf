@@ -164,6 +164,7 @@ void plat_early_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
 	uint64_t val;
+	uint32_t cntcr;
 
 	/* Verify chip id is t210 */
 	assert(tegra_chipid_is_t210());
@@ -181,6 +182,11 @@ void plat_early_platform_setup(void)
 		val |= (uint64_t)CORTEX_A57_L2_ECC_PARITY_PROTECTION_BIT;
 		write_l2ctlr_el1(val);
 	}
+
+	/* Ensure that system counter is enabled in case of coldboot ATF. */
+	cntcr = mmio_read_32(TEGRA_SYSCTR0_BASE + SYSCTR0_CNTCR);
+	cntcr |= SYSCTR0_CNTCR_EN | SYSCTR0_CNTCR_HDBG;
+	mmio_write_32(TEGRA_SYSCTR0_BASE + SYSCTR0_CNTCR, cntcr);
 
 	/* Initialize security engine driver */
 	tegra_se_init();

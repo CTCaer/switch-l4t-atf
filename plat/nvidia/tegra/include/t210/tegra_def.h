@@ -290,4 +290,12 @@
 #define TEGRA_DRAM_BASE			ULL(0x80000000)
 #define TEGRA_DRAM_END			ULL(0x27FFFFFFF)
 
+/*******************************************************************************
+ * Tegra System Counter constants
+ ******************************************************************************/
+#define TEGRA_SYSCTR0_BASE		U(0x700F0000)
+#define  SYSCTR0_CNTCR			U(0x0)
+#define   SYSCTR0_CNTCR_EN		(0x1U << 0)
+#define   SYSCTR0_CNTCR_HDBG		(0x1U << 1)
+
 #endif /* TEGRA_DEF_H */
