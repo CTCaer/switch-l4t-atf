@@ -72,7 +72,7 @@ int32_t tegra_soc_validate_power_state(unsigned int power_state,
 		 * firmware is not present, for a successful System Suspend
 		 * entry.
 		 */
-		if (!tegra_bpmp_init() && !plat_params->sc7entry_fw_base)
+		if (tegra_bpmp_init() != 0U && !plat_params->sc7entry_fw_base)
 			return PSCI_E_NOT_SUPPORTED;
 
 		/*
