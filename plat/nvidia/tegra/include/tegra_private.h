@@ -92,6 +92,7 @@ void plat_runtime_setup(void);
 /* Declarations for plat_secondary.c */
 void plat_secondary_setup(void);
 int32_t plat_lock_cpu_vectors(void);
+void plat_secure_cpu_vectors(bool enable);
 
 /* Declarations for tegra_fiq_glue.c */
 void tegra_fiq_handler_setup(void);
