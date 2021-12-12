@@ -154,17 +154,20 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	 * location to store the boot profiler logs. Sanity check the
 	 * address and initialise the profiler library, if it looks ok.
 	 */
-	ret = bl31_check_ns_address(plat_params->boot_profiler_shmem_base,
-			PROFILER_SIZE_BYTES);
-	if (ret == (int32_t)0) {
+	if (plat_params->boot_profiler_shmem_base != 0ULL) {
 
-		/* store the membase for the profiler lib */
-		plat_bl31_params_from_bl2.boot_profiler_shmem_base =
-			plat_params->boot_profiler_shmem_base;
+		ret = bl31_check_ns_address(plat_params->boot_profiler_shmem_base,
+				PROFILER_SIZE_BYTES);
+		if (ret == (int32_t)0) {
 
-		/* initialise the profiler library */
-		boot_profiler_init(plat_params->boot_profiler_shmem_base,
-				   TEGRA_TMRUS_BASE);
+			/* store the membase for the profiler lib */
+			plat_bl31_params_from_bl2.boot_profiler_shmem_base =
+				plat_params->boot_profiler_shmem_base;
+
+			/* initialise the profiler library */
+			boot_profiler_init(plat_params->boot_profiler_shmem_base,
+					   TEGRA_TMRUS_BASE);
+		}
 	}
 
 	/*
