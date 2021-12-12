@@ -20,6 +20,17 @@
 extern void tegra_secure_entrypoint(void);
 
 /*******************************************************************************
+ * Setup secondary CPU vector secure access
+ ******************************************************************************/
+void plat_secure_cpu_vectors(bool enable)
+{
+	if (enable)
+		mmio_setbits_32(TEGRA_SB_BASE + SB_CSR, SB_CSR_NS_RST_VEC_WR_DIS);
+	else
+		mmio_clrbits_32(TEGRA_SB_BASE + SB_CSR, SB_CSR_NS_RST_VEC_WR_DIS);
+}
+
+/*******************************************************************************
  * Setup secondary CPU vectors
  ******************************************************************************/
 void plat_secondary_setup(void)
@@ -34,6 +45,9 @@ void plat_secondary_setup(void)
 			(reset_addr & 0xFFFFFFFF) | 1);
 	val = reset_addr >> 32;
 	mmio_write_32(TEGRA_SB_BASE + SB_AA64_RESET_HI, val & 0x7FF);
+
+	/* secure writes to reset vectors */
+	plat_secure_cpu_vectors(true);
 
 	/* configure PMC */
 	tegra_pmc_cpu_setup(reset_addr);

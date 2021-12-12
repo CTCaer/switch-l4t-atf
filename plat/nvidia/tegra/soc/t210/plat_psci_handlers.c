@@ -400,6 +400,9 @@ int tegra_soc_pwr_domain_power_down_wfi(const psci_power_state_t *target_state)
 			val &= ~PMC_SECURITY_EN_BIT;
 			mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
 
+			/* Allow non-secure writes to reset vectors for SC7Exit */
+			plat_secure_cpu_vectors(false);
+
 			/* clean up IRAM of any cruft */
 			zeromem((void *)(uintptr_t)TEGRA_IRAM_BASE,
 					TEGRA_IRAM_A_SIZE);
@@ -462,6 +465,11 @@ int tegra_soc_pwr_domain_on_finish(const psci_power_state_t *target_state)
 		 * Lock scratch registers which hold the CPU vectors
 		 */
 		tegra_pmc_lock_cpu_vectors();
+
+		/*
+		 * Enable secure writes to reset vectors
+		 */
+		plat_secure_cpu_vectors(true);
 
 		/*
 		 * Enable WRAP to INCR burst type conversions for
