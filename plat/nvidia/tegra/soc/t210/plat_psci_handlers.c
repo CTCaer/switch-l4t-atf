@@ -102,6 +102,7 @@ plat_local_state_t tegra_soc_get_target_pwr_state(unsigned int lvl,
 					     const plat_local_state_t *states,
 					     unsigned int ncpu)
 {
+	const plat_params_from_bl2_t *plat_params;
 	plat_local_state_t target = PSCI_LOCAL_STATE_RUN;
 	int cpu = plat_my_core_pos();
 	int core_pos = read_mpidr() & MPIDR_CPU_MASK;
@@ -174,6 +175,18 @@ plat_local_state_t tegra_soc_get_target_pwr_state(unsigned int lvl,
 
 	} else if (((lvl == MPIDR_AFFLVL2) || (lvl == MPIDR_AFFLVL1)) &&
 	    (target == PSTATE_ID_SOC_POWERDN)) {
+		plat_params = bl31_get_plat_params();
+
+		/* Enable console if needed */
+		plat_enable_console(plat_params->uart_id);
+
+		/*
+		 * If bpmp-fw is not present, sc7entry-fw must be used
+		 * for a successful System Suspend entry.
+		 */
+		if (tegra_bpmp_available && tegra_bpmp_init() != 0U) {
+			tegra_bpmp_available = false;
+		}
 
 		/* System Suspend */
 		target = PSTATE_ID_SOC_POWERDN;
@@ -191,6 +204,42 @@ int32_t tegra_soc_cpu_standby(plat_local_state_t cpu_state)
 	return PSCI_E_SUCCESS;
 }
 
+static void tegra_soc_cpu_prepare_pmic(void) {
+	uint32_t cfg;
+	uint32_t val;
+
+	/*
+	 * When disabled, DFLL loses its state. Enable
+	 * open loop state for the DFLL as we dont want
+	 * garbage values being written to the pmic
+	 * when we enter cluster idle state.
+	 */
+	mmio_write_32(TEGRA_CL_DVFS_BASE + DVFS_DFLL_CTRL,
+				ENABLE_OPEN_LOOP);
+
+	/* Find if the platform uses OVR2/MAX77621 PMIC */
+	cfg = mmio_read_32(TEGRA_CL_DVFS_BASE + DVFS_DFLL_OUTPUT_CFG);
+	if (cfg & DFLL_OUTPUT_CFG_CLK_EN_BIT) {
+		/* OVR2 */
+
+		/* PWM tristate */
+		val = mmio_read_32(TEGRA_MISC_BASE + PINMUX_AUX_DVFS_PWM);
+		val |= PINMUX_PWM_TRISTATE;
+		mmio_write_32(TEGRA_MISC_BASE + PINMUX_AUX_DVFS_PWM, val);
+
+		/*
+		 * SCRATCH201[1] is being used to identify CPU
+		 * PMIC in warmboot code.
+		 * 0 : OVR2
+		 * 1 : MAX77621
+		 */
+		tegra_pmc_write_32(PMC_SCRATCH201, 0x0);
+	} else {
+		/* MAX77621 */
+		tegra_pmc_write_32(PMC_SCRATCH201, 0x2);
+	}
+}
+
 int tegra_soc_pwr_domain_suspend(const psci_power_state_t *target_state)
 {
 	u_register_t mpidr = read_mpidr();
@@ -199,9 +248,7 @@ int tegra_soc_pwr_domain_suspend(const psci_power_state_t *target_state)
 	unsigned int stateid_afflvl2 = pwr_domain_state[MPIDR_AFFLVL2];
 	unsigned int stateid_afflvl1 = pwr_domain_state[MPIDR_AFFLVL1];
 	unsigned int stateid_afflvl0 = pwr_domain_state[MPIDR_AFFLVL0];
-	uint32_t cfg;
 	int ret = PSCI_E_SUCCESS;
-	uint32_t val;
 
 	if (stateid_afflvl2 == PSTATE_ID_SOC_POWERDN) {
 
@@ -215,42 +262,16 @@ int tegra_soc_pwr_domain_suspend(const psci_power_state_t *target_state)
 			ret = PSCI_E_INTERN_FAIL;
 		}
 
+		if (!tegra_bpmp_available) {
+			tegra_soc_cpu_prepare_pmic();
+		}
+
 	} else if (stateid_afflvl1 == PSTATE_ID_CLUSTER_IDLE) {
 
 		assert(stateid_afflvl0 == PSTATE_ID_CORE_POWERDN);
 
 		if (!tegra_bpmp_available) {
-
-			/*
-			 * When disabled, DFLL loses its state. Enable
-			 * open loop state for the DFLL as we dont want
-			 * garbage values being written to the pmic
-			 * when we enter cluster idle state.
-			 */
-			mmio_write_32(TEGRA_CL_DVFS_BASE + DVFS_DFLL_CTRL,
-				      ENABLE_OPEN_LOOP);
-
-			/* Find if the platform uses OVR2/MAX77621 PMIC */
-			cfg = mmio_read_32(TEGRA_CL_DVFS_BASE + DVFS_DFLL_OUTPUT_CFG);
-			if (cfg & DFLL_OUTPUT_CFG_CLK_EN_BIT) {
-				/* OVR2 */
-
-				/* PWM tristate */
-				val = mmio_read_32(TEGRA_MISC_BASE + PINMUX_AUX_DVFS_PWM);
-				val |= PINMUX_PWM_TRISTATE;
-				mmio_write_32(TEGRA_MISC_BASE + PINMUX_AUX_DVFS_PWM, val);
-
-				/*
-				 * SCRATCH201[1] is being used to identify CPU
-				 * PMIC in warmboot code.
-				 * 0 : OVR2
-				 * 1 : MAX77621
-				 */
-				tegra_pmc_write_32(PMC_SCRATCH201, 0x0);
-			} else {
-				/* MAX77621 */
-				tegra_pmc_write_32(PMC_SCRATCH201, 0x2);
-			}
+			tegra_soc_cpu_prepare_pmic();
 		}
 
 		/* Prepare for cluster idle */
