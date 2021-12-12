@@ -19,6 +19,7 @@
 #define PMC_DPD_ENABLE_0			U(0x24)
 #define PMC_PWRGATE_STATUS			U(0x38)
 #define PMC_PWRGATE_TOGGLE			U(0x30)
+#define PMC_SCRATCH0				U(0x50)
 #define PMC_SCRATCH1				U(0x54)
 #define PMC_CRYPTO_OP_0				U(0xf4)
 #define  PMC_TOGGLE_START			U(0x100)
@@ -51,6 +52,9 @@
 #define PMC_SCRATCH56				U(0x600)
 #define PMC_SCRATCH57				U(0x604)
 #define PMC_SCRATCH201				U(0x844)
+#define PMC_SECURE_SCRATCH108		U(0xB08)
+#define PMC_SECURE_SCRATCH109		U(0xB0C)
+#define PMC_SECURE_SCRATCH110		U(0xB10)
 
 static inline uint32_t tegra_pmc_read_32(uint32_t off)
 {

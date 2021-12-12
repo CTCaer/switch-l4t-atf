@@ -323,4 +323,9 @@
 #define   SYSCTR0_CNTCR_EN		(0x1U << 0)
 #define   SYSCTR0_CNTCR_HDBG		(0x1U << 1)
 
+/*******************************************************************************
+ * Tegra scratch registers constants
+ ******************************************************************************/
+#define  SCRATCH_BL31_ENABLE_MAGIC	U(0x4D415249) /* IRAM */
+
 #endif /* TEGRA_DEF_H */
