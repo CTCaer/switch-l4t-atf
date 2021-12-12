@@ -160,6 +160,7 @@ static void tegra_pwr_domain_on_finish(const psci_power_state_t *target_state)
 	 */
 	if (target_state->pwr_domain_state[PLAT_MAX_PWR_LVL] ==
 			PSTATE_ID_SOC_POWERDN) {
+		plat_params = bl31_get_plat_params();
 
 		/*
 		 * On entering System Suspend state, the GIC loses power
@@ -169,6 +170,7 @@ static void tegra_pwr_domain_on_finish(const psci_power_state_t *target_state)
 		tegra_gic_init();
 
 		/* Restart console output. */
+		plat_enable_console(plat_params->uart_id);
 		console_switch_state(CONSOLE_FLAG_RUNTIME);
 
 		/*
@@ -180,7 +182,6 @@ static void tegra_pwr_domain_on_finish(const psci_power_state_t *target_state)
 		/*
 		 * Security configuration to allow DRAM/device access.
 		 */
-		plat_params = bl31_get_plat_params();
 		tegra_memctrl_tzdram_setup(plat_params->tzdram_base,
 			(uint32_t)plat_params->tzdram_size);
 
