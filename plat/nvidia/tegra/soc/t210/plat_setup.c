@@ -26,6 +26,15 @@
 #include <tegra_platform.h>
 #include <tegra_private.h>
 
+/* UART clock */
+typedef struct uart_clock
+{
+	uint32_t reset;
+	uint32_t enable;
+	uint32_t source;
+	uint32_t mask;
+} uart_clock_t;
+
 /* sets of MMIO ranges setup */
 #define MMIO_RANGE_0_ADDR	0x50000000
 #define MMIO_RANGE_1_ADDR	0x60000000
@@ -114,6 +123,52 @@ static uint32_t tegra210_uart_addresses[TEGRA210_MAX_UART_PORTS + 1] = {
 	TEGRA_UARTE_BASE,
 };
 
+static const uart_clock_t tegra210_uart_clocks[] = {
+	{ TEGRA_RST_DEVICES_L, TEGRA_CLK_OUT_ENB_L, TEGRA_CLK_SOURCE_UARTA,   UARTA_CLK_BIT },
+	{ TEGRA_RST_DEVICES_L, TEGRA_CLK_OUT_ENB_L, TEGRA_CLK_SOURCE_UARTB,   UARTB_CLK_BIT },
+	{ TEGRA_RST_DEVICES_H, TEGRA_CLK_OUT_ENB_H, TEGRA_CLK_SOURCE_UARTC,   UARTC_CLK_BIT },
+	{ TEGRA_RST_DEVICES_U, TEGRA_CLK_OUT_ENB_U, TEGRA_CLK_SOURCE_UARTD,   UARTD_CLK_BIT },
+	{ TEGRA_RST_DEVICES_Y, TEGRA_CLK_OUT_ENB_Y, TEGRA_CLK_SOURCE_UARTAPE, UARTAPE_CLK_BIT }
+};
+
+static void plat_set_uart_clock(int32_t id)
+{
+	uint32_t val = 0;
+	uint32_t uart_idx = id - 1;
+	const uart_clock_t *clk = &tegra210_uart_clocks[uart_idx];
+
+	/* Setup uart pinmuxing */
+	mmio_write_32(TEGRA_MISC_BASE + PINMUX_AUX_UARTX_TX(uart_idx), 0);
+	mmio_write_32(TEGRA_MISC_BASE + PINMUX_AUX_UARTX_RX(uart_idx),
+		      PINMUX_INPUT_ENABLE | PINMUX_PULL_UP);
+	mmio_write_32(TEGRA_MISC_BASE + PINMUX_AUX_UARTX_RTS(uart_idx), 0);
+	mmio_write_32(TEGRA_MISC_BASE + PINMUX_AUX_UARTX_CTS(uart_idx),
+		      PINMUX_INPUT_ENABLE | PINMUX_PULL_UP);
+
+	/* Assert Reset */
+	val = mmio_read_32(TEGRA_CAR_RESET_BASE + clk->reset);
+	val |= clk->mask;
+	mmio_write_32(TEGRA_CAR_RESET_BASE + clk->reset, val);
+
+	/* Disable clock */
+	val = mmio_read_32(TEGRA_CAR_RESET_BASE + clk->enable);
+	val &= ~(clk->mask);
+	mmio_write_32(TEGRA_CAR_RESET_BASE + clk->enable, val);
+
+	/* Set clock source to PLLP with divider 2 */
+	mmio_write_32(TEGRA_CAR_RESET_BASE + clk->source, (0U << 29) | 2);
+
+	/* Enable clock */
+	val = mmio_read_32(TEGRA_CAR_RESET_BASE + clk->enable);
+	val |= clk->mask;
+	mmio_write_32(TEGRA_CAR_RESET_BASE + clk->enable, val);
+
+	/* De-Assert Reset */
+	val = mmio_read_32(TEGRA_CAR_RESET_BASE + clk->reset);
+	val &= ~(clk->mask);
+	mmio_write_32(TEGRA_CAR_RESET_BASE + clk->reset, val);
+}
+
 /*******************************************************************************
  * Enable console corresponding to the console ID
  ******************************************************************************/
@@ -130,6 +185,7 @@ void plat_enable_console(int32_t id)
 			console_clock = TEGRA_BOOT_UART_CLK_13_MHZ;
 		} else {
 			console_clock = TEGRA_BOOT_UART_CLK_408_MHZ;
+			plat_set_uart_clock(id);
 		}
 
 		(void)console_16550_register(tegra210_uart_addresses[id],

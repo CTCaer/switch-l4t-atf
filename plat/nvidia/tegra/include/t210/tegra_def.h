@@ -112,6 +112,16 @@
  * Tegra Clock and Reset Controller constants
  ******************************************************************************/
 #define TEGRA_CAR_RESET_BASE		U(0x60006000)
+#define TEGRA_RST_DEVICES_L		U(0x4)
+#define TEGRA_CLK_OUT_ENB_L		U(0x10)
+#define  UARTA_CLK_BIT			(U(1) << 6)
+#define  UARTB_CLK_BIT			(U(1) << 7)
+#define TEGRA_RST_DEVICES_H		U(0x8)
+#define TEGRA_CLK_OUT_ENB_H		U(0x14)
+#define  UARTC_CLK_BIT			(U(1) << 23)
+#define TEGRA_RST_DEVICES_U		U(0xc)
+#define TEGRA_CLK_OUT_ENB_U		U(0x18)
+#define  UARTD_CLK_BIT			(U(1) << 1)
 #define TEGRA_BOND_OUT_H		U(0x74)
 #define  APB_DMA_LOCK_BIT		(U(1) << 2)
 #define  AHB_DMA_LOCK_BIT		(U(1) << 1)
@@ -119,12 +129,19 @@
 #define  IRAM_D_LOCK_BIT		(U(1) << 23)
 #define  IRAM_C_LOCK_BIT		(U(1) << 22)
 #define  IRAM_B_LOCK_BIT		(U(1) << 21)
+#define TEGRA_CLK_SOURCE_UARTA		U(0x178)
+#define TEGRA_CLK_SOURCE_UARTB		U(0x17C)
+#define TEGRA_CLK_SOURCE_UARTC		U(0x1A0)
+#define TEGRA_CLK_SOURCE_UARTD		U(0x1C0)
 #define TEGRA_GPU_RESET_REG_OFFSET	U(0x28C)
 #define TEGRA_GPU_RESET_GPU_SET_OFFSET	U(0x290)
 #define  GPU_RESET_BIT			(U(1) << 24)
 #define  GPU_SET_BIT			(U(1) << 24)
+#define TEGRA_CLK_OUT_ENB_Y		U(0x298)
+#define TEGRA_RST_DEVICES_Y		U(0x2A4)
 #define TEGRA_RST_DEV_SET_Y		U(0x2a8)
 #define  NVENC_RESET_BIT		(U(1) << 27)
+#define  UARTAPE_CLK_BIT		(U(1) << 20)
 #define  TSECB_RESET_BIT		(U(1) << 14)
 #define  APE_RESET_BIT			(U(1) << 6)
 #define  NVJPG_RESET_BIT		(U(1) << 3)
@@ -156,6 +173,7 @@
 #define  ENTROPY_RESET_BIT 		(U(1) << 21)
 #define TEGRA_CLK_RST_CTL_CLK_SRC_SE	U(0x42C)
 #define  SE_CLK_SRC_MASK		(U(7) << 29)
+#define  SE_CLK_SRC_PLLP		(U(0) << 29)
 #define  SE_CLK_SRC_CLK_M		(U(6) << 29)
 #define TEGRA_RST_DEV_SET_V		U(0x430)
 #define  SE_RESET_BIT			(U(1) << 31)
@@ -163,6 +181,7 @@
 #define  SATA_RESET_BIT			(U(1) << 28)
 #define TEGRA_RST_DEV_CLR_V		U(0x434)
 #define TEGRA_CLK_ENB_V			U(0x440)
+#define TEGRA_CLK_SOURCE_UARTAPE	U(0x710)
 
 /*******************************************************************************
  * Tegra Flow Controller constants
@@ -192,7 +211,13 @@
 #define  APB_SLAVE_SECURITY_ENABLE	U(0xC00)
 #define  PMC_SECURITY_EN_BIT		(U(1) << 13)
 #define  PINMUX_AUX_DVFS_PWM		U(0x3184)
-#define  PINMUX_PWM_TRISTATE		(U(1) << 4)
+#define  PINMUX_AUX_UARTX_TX(x)		(0x30E4U + 0x10 * (x))
+#define  PINMUX_AUX_UARTX_RX(x)		(0x30E8U + 0x10 * (x))
+#define  PINMUX_AUX_UARTX_RTS(x)	(0x30ECU + 0x10 * (x))
+#define  PINMUX_AUX_UARTX_CTS(x)	(0x30F0U + 0x10 * (x))
+#define   PINMUX_PULL_UP		(0x2U << 2)
+#define   PINMUX_PWM_TRISTATE		(0x1U << 4)
+#define   PINMUX_INPUT_ENABLE		(0x1U << 6)
 
 /*******************************************************************************
  * Tegra UART controller base addresses
