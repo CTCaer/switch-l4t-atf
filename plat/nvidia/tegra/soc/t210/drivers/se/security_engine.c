@@ -331,11 +331,17 @@ static int tegra_se_perform_operation(const tegra_se_dev_t *se_dev, uint32_t nby
 	/* Make SE LL data coherent before the SE operation */
 	tegra_se_make_data_coherent(se_dev);
 
+	/* Commit all register writes */
+	dsb();
+
 	/* Start hardware operation */
 	if (context_save)
 		tegra_se_write_32(se_dev, SE_OPERATION_REG_OFFSET, SE_OP_CTX_SAVE);
 	else
 		tegra_se_write_32(se_dev, SE_OPERATION_REG_OFFSET, SE_OP_START);
+
+	/* Commit write */
+	(void)tegra_se_read_32(se_dev, SE_OPERATION_REG_OFFSET);
 
 	/* Wait for operation to finish */
 	ret = tegra_se_operation_complete(se_dev);
