@@ -55,6 +55,8 @@ typedef struct plat_params_from_bl2 {
 	uint64_t emc_table_size;
 	/* EMC Table base address */
 	uint64_t emc_table_base;
+	/* Disable PMC secure registers */
+	int32_t pmc_security_dis;
 } plat_params_from_bl2_t;
 
 /*******************************************************************************

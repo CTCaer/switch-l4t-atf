@@ -40,6 +40,8 @@
 static int cpu_powergate_mask[PLATFORM_MAX_CPUS_PER_CLUSTER];
 static bool tegra_bpmp_available = true;
 
+extern void r2p_reboot_to_payload();
+
 int32_t tegra_soc_validate_power_state(unsigned int power_state,
 					psci_power_state_t *req_state)
 {
@@ -522,7 +524,7 @@ int tegra_soc_pwr_domain_on_finish(const psci_power_state_t *target_state)
 				plat_params->tzdram_size + offset);
 		}
 
-		if (!tegra_chipid_is_t210_b01()) {
+		if (!plat_params->pmc_security_dis && !tegra_chipid_is_t210_b01()) {
 			/* restrict PMC access to secure world */
 			val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
 			val |= PMC_SECURITY_EN_BIT;

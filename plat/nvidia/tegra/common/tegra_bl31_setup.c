@@ -139,6 +139,7 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	if (plat_params->enable_extra_features == TEGRA_PLAT_EXTRA_FEATURES_ENABLE) {
 		plat_bl31_params_from_bl2.emc_table_size = plat_params->emc_table_size;
 		plat_bl31_params_from_bl2.emc_table_base = plat_params->emc_table_base;
+		plat_bl31_params_from_bl2.pmc_security_dis = plat_params->pmc_security_dis;
 	}
 
 	/*
