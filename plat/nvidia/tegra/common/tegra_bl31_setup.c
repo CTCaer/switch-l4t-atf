@@ -135,6 +135,12 @@ void bl31_early_platform_setup2(u_register_t arg0, u_register_t arg1,
 	plat_bl31_params_from_bl2.sc7entry_fw_size = plat_params->sc7entry_fw_size;
 	plat_bl31_params_from_bl2.sc7entry_fw_base = plat_params->sc7entry_fw_base;
 
+	/* Parse extra features if enabled */
+	if (plat_params->enable_extra_features == TEGRA_PLAT_EXTRA_FEATURES_ENABLE) {
+		plat_bl31_params_from_bl2.emc_table_size = plat_params->emc_table_size;
+		plat_bl31_params_from_bl2.emc_table_base = plat_params->emc_table_base;
+	}
+
 	/*
 	 * It is very important that we run either from TZDRAM or TZSRAM base.
 	 * Add an explicit check here.

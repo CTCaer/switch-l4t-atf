@@ -48,8 +48,19 @@ typedef struct plat_params_from_bl2 {
 	/* System Suspend Entry Firmware base address */
 	uint64_t sc7entry_fw_base;
 	/* Enable dual execution */
-	uint8_t enable_ccplex_lock_step;
+	int32_t enable_ccplex_lock_step;
+	/* Enable r2p/emc/sec features */
+	uint32_t enable_extra_features;
+	/* EMC Table size */
+	uint64_t emc_table_size;
+	/* EMC Table base address */
+	uint64_t emc_table_base;
 } plat_params_from_bl2_t;
+
+/*******************************************************************************
+ * Defines for parameters received from BL2
+ ******************************************************************************/
+#define TEGRA_PLAT_EXTRA_FEATURES_ENABLE	(0x52545845U)
 
 /*******************************************************************************
  * Helper function to access l2ctlr_el1 register on Cortex-A57 CPUs

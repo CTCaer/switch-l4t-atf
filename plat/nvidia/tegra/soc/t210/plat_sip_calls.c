@@ -16,6 +16,7 @@
 #include <common/runtime_svc.h>
 #include <errno.h>
 #include <lib/mmio.h>
+#include <lib/utils.h>
 #include <lib/utils_def.h>
 
 #include <memctrl.h>
@@ -31,9 +32,16 @@
 #define PMC_WRITE 			U(0xbb)
 
 /*******************************************************************************
+ * EMC parameters
+ ******************************************************************************/
+#define EMC_TABLE_ADDR			U(0xaa)
+#define EMC_TABLE_SIZE			U(0xbb)
+
+/*******************************************************************************
  * Tegra210 SiP SMCs
  ******************************************************************************/
 #define TEGRA_SIP_PMC_COMMANDS		U(0xC2FFFE00)
+#define TEGRA_SIP_EMC_COMMANDS		U(0xC2FFFE01)
 
 /*******************************************************************************
  * This function is responsible for handling all T210 SiP calls
@@ -48,6 +56,7 @@ int plat_sip_handler(uint32_t smc_fid,
 		     uint64_t flags)
 {
 	uint32_t val, ns;
+	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
 
 	/* Determine which security state this SMC originated from */
 	ns = is_caller_non_secure(flags);
@@ -87,6 +96,16 @@ int plat_sip_handler(uint32_t smc_fid,
 			write_ctx_reg(get_gpregs_ctx(handle), CTX_GPREG_X1, val);
 		} else if (x1 == PMC_WRITE) {
 			mmio_write_32((uint32_t)(TEGRA_PMC_BASE + x2), (uint32_t)x3);
+		} else {
+			return -EINVAL;
+		}
+	} else if (smc_fid == TEGRA_SIP_EMC_COMMANDS) {
+		if (x1 == EMC_TABLE_ADDR && plat_params->emc_table_base) {
+			val = plat_params->emc_table_base;
+			write_ctx_reg(get_gpregs_ctx(handle), CTX_GPREG_X1, val);
+		} else if (x1 == EMC_TABLE_SIZE && plat_params->emc_table_size) {
+			val = plat_params->emc_table_size;
+			write_ctx_reg(get_gpregs_ctx(handle), CTX_GPREG_X1, val);
 		} else {
 			return -EINVAL;
 		}
