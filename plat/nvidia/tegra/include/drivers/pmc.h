@@ -72,5 +72,6 @@ bool tegra_pmc_is_last_on_cpu(void);
 void tegra_pmc_lock_cpu_vectors(void);
 void tegra_pmc_resume(void);
 __dead2 void tegra_pmc_system_reset(void);
+void tegra_pmc_clear_reset_type(void);
 
 #endif /* PMC_H */

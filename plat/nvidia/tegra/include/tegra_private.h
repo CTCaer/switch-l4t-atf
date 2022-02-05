@@ -55,6 +55,10 @@ typedef struct plat_params_from_bl2 {
 	uint64_t emc_table_size;
 	/* EMC Table base address */
 	uint64_t emc_table_base;
+	/* Initial R2P payload size */
+	uint64_t r2p_payload_size;
+	/* Initial R2P payload base address */
+	uint64_t r2p_payload_base;
 	/* Board setup flags */
 	uint64_t flags;
 } plat_params_from_bl2_t;

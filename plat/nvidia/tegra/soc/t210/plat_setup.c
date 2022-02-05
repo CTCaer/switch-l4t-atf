@@ -21,6 +21,7 @@
 #include <flowctrl.h>
 #include <memctrl.h>
 #include <plat/common/platform.h>
+#include <pmc.h>
 #include <security_engine.h>
 #include <tegra_def.h>
 #include <tegra_platform.h>
@@ -278,12 +279,36 @@ static const interrupt_prop_t tegra210_interrupt_props[] = {
 void plat_late_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
-	uint64_t sc7entry_end, offset;
+	uint32_t *iram_entry_op = (uint32_t *)(TEGRA_IRAM_BASE + TEGRA_IRAM_A_SIZE);
+	uint64_t sc7entry_end, r2p_payload_end;
+	uint64_t offset = 0;
 	int ret;
 	uint32_t val;
 
 	/* memmap TZDRAM area containing the SC7 Entry Firmware */
 	if (plat_params->sc7entry_fw_base && plat_params->sc7entry_fw_size) {
+
+		if (plat_params->r2p_payload_base && plat_params->r2p_payload_size) {
+			/* r2p payload must be _before_ BL31 base */
+			assert(plat_params->tzdram_base > plat_params->r2p_payload_base);
+
+			r2p_payload_end = plat_params->r2p_payload_base +
+				       plat_params->r2p_payload_size;
+			assert(r2p_payload_end < plat_params->tzdram_base);
+
+			/* r2p payload start must be exactly 256KB behind BL31 base */
+			offset = plat_params->tzdram_base - plat_params->r2p_payload_base;
+
+			/* memmap r2p payload firmware code */
+			ret = mmap_add_dynamic_region(plat_params->r2p_payload_base,
+					plat_params->r2p_payload_base,
+					plat_params->r2p_payload_size,
+					MT_SECURE | MT_RO_DATA);
+			assert(ret == 0);
+
+			/* clear IRAM entry OP in IRAM */
+			*iram_entry_op = 0;
+		}
 
 		assert(plat_params->sc7entry_fw_size <= TEGRA_IRAM_A_SIZE);
 
@@ -293,12 +318,12 @@ void plat_late_platform_setup(void)
 		 * exactly 1MB from BL31 base.
 		 */
 
-		/* sc7entry-fw must be _before_ BL31 base */
-		assert(plat_params->tzdram_base > plat_params->sc7entry_fw_base);
+		/* sc7entry-fw must be _before_ r2p payload base */
+		assert(plat_params->tzdram_base - offset > plat_params->sc7entry_fw_base);
 
 		sc7entry_end = plat_params->sc7entry_fw_base +
 			       plat_params->sc7entry_fw_size;
-		assert(sc7entry_end < plat_params->tzdram_base);
+		assert(sc7entry_end < plat_params->tzdram_base - offset);
 
 		/* sc7entry-fw start must be exactly 1MB behind BL31 base */
 		offset = plat_params->tzdram_base - plat_params->sc7entry_fw_base;
@@ -333,6 +358,9 @@ void plat_late_platform_setup(void)
 		val |= PMC_SECURITY_EN_BIT;
 		mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
 	}
+
+	/* clear pmc reset type from before */
+	tegra_pmc_clear_reset_type();
 }
 
 /*******************************************************************************

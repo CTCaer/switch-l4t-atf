@@ -103,7 +103,7 @@ void tegra_pmc_lock_cpu_vectors(void)
 bool tegra_pmc_is_last_on_cpu(void)
 {
 	int i, cpu = read_mpidr() & MPIDR_CPU_MASK;
-	uint32_t val = tegra_pmc_read_32(PMC_PWRGATE_STATUS);;
+	uint32_t val = tegra_pmc_read_32(PMC_PWRGATE_STATUS);
 	bool status = true;
 
 	/* check if this is the last standing CPU */
@@ -150,4 +150,16 @@ __dead2 void tegra_pmc_system_reset(void)
 
 	ERROR("Tegra System Reset: operation not handled.\n");
 	panic();
+}
+
+/*******************************************************************************
+ * Clear reset type from warmboot and rcm.
+ ******************************************************************************/
+void tegra_pmc_clear_reset_type(void)
+{
+	uint32_t reg;
+
+	reg = tegra_pmc_read_32(PMC_SCRATCH0);
+	reg &= ~(PMC_SCRATCH0_MODE_RCM | PMC_SCRATCH0_MODE_WARMBOOT);
+	tegra_pmc_write_32(PMC_SCRATCH0, reg);
 }
