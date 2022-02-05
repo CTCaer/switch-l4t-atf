@@ -614,6 +614,8 @@ int tegra_soc_pwr_domain_off(const psci_power_state_t *target_state)
 
 int tegra_soc_prepare_system_reset(void)
 {
+	uint32_t scratch0;
+
 	/*
 	 * Set System Clock (SCLK) to POR default so that the clock source
 	 * for the PMC APB clock would not be changed due to system reset.
@@ -624,6 +626,11 @@ int tegra_soc_prepare_system_reset(void)
 
 	/* Wait 1 ms to make sure clock source/device logic is stabilized. */
 	mdelay(1);
+
+	/* R2P: Try to reboot to payload. */
+	scratch0 = tegra_pmc_read_32(PMC_SCRATCH0);
+	if (!(scratch0 & PMC_SCRATCH0_MODE_RCM))
+		r2p_reboot_to_payload();
 
 	/*
 	 * Program the PMC in order to restart the system.

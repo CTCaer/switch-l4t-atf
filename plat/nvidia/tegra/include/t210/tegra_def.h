@@ -58,7 +58,7 @@
  ******************************************************************************/
 #define TEGRA_IRAM_BASE			U(0x40000000)
 #define TEGRA_IRAM_A_SIZE		U(0x10000) /* 64KB */
-#define TEGRA_IRAM_SIZE			U(40000) /* 256KB */
+#define TEGRA_IRAM_SIZE			U(0x40000) /* 256KB */
 
 /*******************************************************************************
  * GIC memory map
@@ -69,7 +69,7 @@
 /*******************************************************************************
  * Secure IRQ definitions
  ******************************************************************************/
-#define TEGRA210_WDT_CPU_LEGACY_FIQ		U(28)
+#define TEGRA210_WDT_CPU_LEGACY_FIQ	U(28)
 
 /*******************************************************************************
  * Tegra Memory Select Switch Controller constants
@@ -326,6 +326,18 @@
 /*******************************************************************************
  * Tegra scratch registers constants
  ******************************************************************************/
+#define PMC_SCRATCH0_MODE_WARMBOOT	(1U << 0)
+#define PMC_SCRATCH0_MODE_RCM		(1U << 1)
+#define PMC_SCRATCH0_MODE_PAYLOAD	(1U << 29)
+#define PMC_SCRATCH0_MODE_BOOTLOADER	(1U << 30)
+#define PMC_SCRATCH0_MODE_RECOVERY	(1U << 31)
+
 #define  SCRATCH_BL31_ENABLE_MAGIC	U(0x4D415249) /* IRAM */
+
+/*******************************************************************************
+ * Tegra useful macros
+ ******************************************************************************/
+#define TEGRA_ALIGN(x, a) 		(((x) + (a) - 1) & ~((a) - 1))
+#define TEGRA_ALIGN_DOWN(x, a) 		((x) & ~((a) - 1))
 
 #endif /* TEGRA_DEF_H */
