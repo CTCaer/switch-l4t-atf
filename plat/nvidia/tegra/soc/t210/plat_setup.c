@@ -319,12 +319,15 @@ void plat_late_platform_setup(void)
 		assert(ret == 0);
 
 		/* restrict PMC access to secure world */
-		val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
-		val |= PMC_SECURITY_EN_BIT;
-		mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
+		if (!(plat_params->flags & TEGRA_PLAT_PMC_NON_SECURE)) {
+			val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
+			val |= PMC_SECURITY_EN_BIT;
+			mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
+		}
 	}
 
-	if (!tegra_chipid_is_t210_b01()) {
+	if (!(plat_params->flags & TEGRA_PLAT_PMC_NON_SECURE) &&
+	    !tegra_chipid_is_t210_b01()) {
 		/* restrict PMC access to secure world */
 		val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
 		val |= PMC_SECURITY_EN_BIT;

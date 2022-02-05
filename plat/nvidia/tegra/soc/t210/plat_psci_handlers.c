@@ -522,7 +522,8 @@ int tegra_soc_pwr_domain_on_finish(const psci_power_state_t *target_state)
 				plat_params->tzdram_size + offset);
 		}
 
-		if (!tegra_chipid_is_t210_b01()) {
+		if (!(plat_params->flags & TEGRA_PLAT_PMC_NON_SECURE) &&
+		    !tegra_chipid_is_t210_b01()) {
 			/* restrict PMC access to secure world */
 			val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
 			val |= PMC_SECURITY_EN_BIT;
