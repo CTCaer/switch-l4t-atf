@@ -628,10 +628,12 @@ int tegra_soc_prepare_system_reset(void)
 	/* Wait 1 ms to make sure clock source/device logic is stabilized. */
 	mdelay(1);
 
-	/* R2P: Try to reboot to payload. */
+	/* R2P: Try to reboot to payload if T210. */
 	scratch0 = tegra_pmc_read_32(PMC_SCRATCH0);
-	if (!(scratch0 & PMC_SCRATCH0_MODE_RCM))
+	if (!(scratch0 & PMC_SCRATCH0_MODE_RCM) &&
+		!tegra_chipid_is_t210_b01()) {
 		r2p_reboot_to_payload();
+	}
 
 	/*
 	 * Program the PMC in order to restart the system.
