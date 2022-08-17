@@ -286,16 +286,13 @@ void plat_late_platform_setup(void)
 	uint32_t val;
 
 	/* memmap TZDRAM area containing the r2p payload firmware */
-	if (plat_params->r2p_payload_base && plat_params->r2p_payload_size) {
+	if (plat_params->r2p_payload_base) {
 		/* r2p payload must be _before_ BL31 base */
 		assert(plat_params->tzdram_base > plat_params->r2p_payload_base);
 
 		r2p_payload_end = plat_params->r2p_payload_base +
 			       plat_params->r2p_payload_size;
 		assert(r2p_payload_end < plat_params->tzdram_base);
-
-		/* r2p payload start must be exactly 256KB behind BL31 base */
-		offset = plat_params->tzdram_base - plat_params->r2p_payload_base;
 
 		/* memmap r2p payload firmware code */
 		ret = mmap_add_dynamic_region(plat_params->r2p_payload_base,
@@ -306,18 +303,10 @@ void plat_late_platform_setup(void)
 
 		/* clear IRAM entry OP in IRAM */
 		*iram_entry_op = 0;
-
-
-		/* check if sc7entry firmware is missing */
-		if (!plat_params->sc7entry_fw_base || !plat_params->sc7entry_fw_size) {
-			/* setup secure TZDRAM area, increased by 1MB */
-			tegra_memctrl_tzdram_setup(plat_params->tzdram_base - 0x100000,
-						   plat_params->tzdram_size + 0x100000);
-		}
 	}
 
 	/* memmap TZDRAM area containing the SC7 Entry Firmware */
-	if (plat_params->sc7entry_fw_base && plat_params->sc7entry_fw_size) {
+	if (plat_params->sc7entry_fw_base) {
 		assert(plat_params->sc7entry_fw_size <= TEGRA_IRAM_A_SIZE);
 
 		/*
@@ -335,11 +324,9 @@ void plat_late_platform_setup(void)
 
 		/* sc7entry-fw start must be exactly 1MB behind BL31 base */
 		offset = plat_params->tzdram_base - plat_params->sc7entry_fw_base;
-		assert(offset == 0x100000);
-
-		/* secure TZDRAM area */
-		tegra_memctrl_tzdram_setup(plat_params->sc7entry_fw_base,
-			plat_params->tzdram_size + offset);
+		if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION)) {
+			assert(offset == 0x100000);
+		}
 
 		/* power off BPMP processor until SC7 entry */
 		tegra_fc_bpmp_off();
@@ -357,6 +344,13 @@ void plat_late_platform_setup(void)
 			val |= PMC_SECURITY_EN_BIT;
 			mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
 		}
+	}
+
+	if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION) && 
+	     (plat_params->sc7entry_fw_base || plat_params->r2p_payload_base)) {
+		/* secure TZDRAM area, increased by 1MB */
+		tegra_memctrl_tzdram_setup(plat_params->tzdram_base - 0x100000,
+					   plat_params->tzdram_size + 0x100000);
 	}
 
 	if (!(plat_params->flags & TEGRA_PLAT_PMC_NON_SECURE) &&

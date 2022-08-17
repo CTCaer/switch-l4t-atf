@@ -461,7 +461,6 @@ int tegra_soc_pwr_domain_on_finish(const psci_power_state_t *target_state)
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
 	uint32_t cfg;
 	uint32_t val, entrypoint = 0;
-	uint64_t offset;
 
 	/* platform parameter passed by the previous bootloader */
 	if (plat_params->l2_ecc_parity_prot_dis != 1) {
@@ -517,11 +516,12 @@ int tegra_soc_pwr_domain_on_finish(const psci_power_state_t *target_state)
 			tegra_bpmp_resume();
 		}
 
-		if (plat_params->sc7entry_fw_base != 0U) {
-			/* sc7entry-fw is part of TZDRAM area */
-			offset = plat_params->tzdram_base - plat_params->sc7entry_fw_base;
-			tegra_memctrl_tzdram_setup(plat_params->sc7entry_fw_base,
-				plat_params->tzdram_size + offset);
+		if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION) &&
+		     (plat_params->sc7entry_fw_base != 0U ||
+		      plat_params->r2p_payload_base != 0U)) {
+			/* sc7entry-fw and r2p payload is part of TZDRAM area */
+			tegra_memctrl_tzdram_setup(plat_params->tzdram_base - 0x100000,
+						   plat_params->tzdram_size + 0x100000);
 		}
 
 		if (!(plat_params->flags & TEGRA_PLAT_PMC_NON_SECURE) &&
