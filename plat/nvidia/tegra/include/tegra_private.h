@@ -68,6 +68,7 @@ typedef struct plat_params_from_bl2 {
  ******************************************************************************/
 #define TEGRA_PLAT_EXTRA_FEATURES_ENABLE	(0x52545845U)
 #define TEGRA_PLAT_PMC_NON_SECURE		(U(1) << U(0))
+#define TEGRA_PLAT_SC7_NO_BASE_RESTRICTION	(U(1) << U(1))
 
 /*******************************************************************************
  * Helper function to access l2ctlr_el1 register on Cortex-A57 CPUs
