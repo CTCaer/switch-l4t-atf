@@ -377,6 +377,9 @@ int tegra_soc_pwr_domain_power_down_wfi(const psci_power_state_t *target_state)
 			tegra_se_save_tzram();
 		}
 
+		/* Allow non-secure writes to reset vectors for BPMP-FW/SC7Exit */
+		plat_secure_cpu_vectors(false);
+
 		/* de-init the interface */
 		tegra_bpmp_suspend();
 
@@ -422,9 +425,6 @@ int tegra_soc_pwr_domain_power_down_wfi(const psci_power_state_t *target_state)
 			val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
 			val &= ~PMC_SECURITY_EN_BIT;
 			mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
-
-			/* Allow non-secure writes to reset vectors for SC7Exit */
-			plat_secure_cpu_vectors(false);
 
 			/* clean up IRAM of any cruft */
 			zeromem((void *)(uintptr_t)TEGRA_IRAM_BASE,
