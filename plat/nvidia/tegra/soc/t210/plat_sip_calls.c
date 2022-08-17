@@ -2,7 +2,7 @@
  * Copyright (c) 2018, ARM Limited and Contributors. All rights reserved.
  * Copyright (c) 2020, NVIDIA Corporation. All rights reserved.
  * Copyright (c) 2019, Ezekiel Bethel.
- * Copyright (c) 2021, CTCaer.
+ * Copyright (c) 2021-2022, CTCaer.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -221,12 +221,18 @@ int plat_sip_handler(uint32_t smc_fid,
 			val = plat_params->emc_table_size;
 			write_ctx_reg(get_gpregs_ctx(handle), CTX_GPREG_X1, val);
 		} else {
-			return -EINVAL;
+			return -ENOTSUP;
 		}
 	} else if (smc_fid == TEGRA_SIP_R2P_COPY_TO_IRAM) {
-		return r2p_iram_copy(x1, x2, x3, x4);
+		if (!tegra_chipid_is_t210_b01())
+			return r2p_iram_copy(x1, x2, x3, x4);
+		else
+			return -ENOTSUP;
 	} else if (smc_fid == TEGRA_SIP_R2P_DO_REBOOT) {
-		r2p_reboot_to_payload();
+		if (!tegra_chipid_is_t210_b01())
+			r2p_reboot_to_payload();
+		else
+			return -ENOTSUP;
 	} else {
 		return -ENOTSUP;
 	}
