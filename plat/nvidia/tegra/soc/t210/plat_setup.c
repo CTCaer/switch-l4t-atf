@@ -280,9 +280,9 @@ void plat_late_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
 	uint32_t *iram_entry_op = (uint32_t *)(TEGRA_IRAM_BASE + TEGRA_IRAM_A_SIZE);
-	uint64_t sc7entry_end, r2p_payload_end;
+	uint64_t __attribute__((unused)) sc7entry_end, r2p_payload_end;
+	int __attribute__((unused)) ret;
 	uint64_t offset = 0;
-	int ret;
 	uint32_t val;
 
 	/* memmap TZDRAM area containing the r2p payload firmware */

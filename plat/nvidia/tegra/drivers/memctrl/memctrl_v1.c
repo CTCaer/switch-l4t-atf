@@ -96,7 +96,7 @@ void tegra_memctrl_tzdram_setup(uint64_t phys_base, uint32_t size_in_bytes)
 static void tegra_clear_videomem(uintptr_t non_overlap_area_start,
 				 unsigned long long non_overlap_area_size)
 {
-	int ret;
+	int __attribute__((unused)) ret;
 
 	/*
 	 * Map the NS memory first, clean it and then unmap it.
