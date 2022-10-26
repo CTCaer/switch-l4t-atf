@@ -501,9 +501,9 @@ int tegra_soc_pwr_domain_on_finish(const psci_power_state_t *target_state)
 				plat_params->tzdram_size + offset);
 
 			/* restrict PMC access to secure world */
-			val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
-			val |= PMC_SECURITY_EN_BIT;
-			mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
+			//val = mmio_read_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE);
+			//val |= PMC_SECURITY_EN_BIT;
+			//mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
 		}
 	}
 
