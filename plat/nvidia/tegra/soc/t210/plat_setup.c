@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015-2019, ARM Limited and Contributors. All rights reserved.
  * Copyright (c) 2020, NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2021-2022, CTCaer.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -46,7 +47,7 @@ typedef struct uart_clock
  * Table of regions to map using the MMU.
  */
 static const mmap_region_t tegra_mmap[] = {
-	MAP_REGION_FLAT(TEGRA_IRAM_BASE, 0x40000, /* 256KB */
+	MAP_REGION_FLAT(TEGRA_IRAM_BASE, TEGRA_IRAM_SIZE,
 			MT_DEVICE | MT_RW | MT_SECURE),
 	MAP_REGION_FLAT(MMIO_RANGE_0_ADDR, MMIO_RANGE_SIZE,
 			MT_DEVICE | MT_RW | MT_SECURE),
@@ -279,20 +280,20 @@ static const interrupt_prop_t tegra210_interrupt_props[] = {
 void plat_late_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
-	uint32_t *iram_entry_op = (uint32_t *)(TEGRA_IRAM_BASE + TEGRA_IRAM_A_SIZE);
-	uint64_t __attribute__((unused)) sc7entry_end, r2p_payload_end;
 	int __attribute__((unused)) ret;
-	uint64_t offset = 0;
 	uint32_t val;
 
 	/* memmap TZDRAM area containing the r2p payload firmware */
 	if (plat_params->r2p_payload_base) {
 		/* r2p payload must be _before_ BL31 base */
-		assert(plat_params->tzdram_base > plat_params->r2p_payload_base);
+		if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION)) {
+			assert(plat_params->tzdram_base >
+			       plat_params->r2p_payload_base);
 
-		r2p_payload_end = plat_params->r2p_payload_base +
-			       plat_params->r2p_payload_size;
-		assert(r2p_payload_end < plat_params->tzdram_base);
+			assert((plat_params->r2p_payload_base +
+					plat_params->r2p_payload_size) <
+			       plat_params->tzdram_base);
+		}
 
 		/* memmap r2p payload firmware code */
 		ret = mmap_add_dynamic_region(plat_params->r2p_payload_base,
@@ -300,9 +301,6 @@ void plat_late_platform_setup(void)
 				plat_params->r2p_payload_size,
 				MT_SECURE | MT_RO_DATA);
 		assert(ret == 0);
-
-		/* clear IRAM entry OP in IRAM */
-		*iram_entry_op = 0;
 	}
 
 	/* memmap TZDRAM area containing the SC7 Entry Firmware */
@@ -314,18 +312,18 @@ void plat_late_platform_setup(void)
 		 * aperture, _before_ the BL31 code and the start address is
 		 * exactly 1MB from BL31 base.
 		 */
-
-		/* sc7entry-fw must be _before_ r2p payload base */
-		assert(plat_params->tzdram_base - offset > plat_params->sc7entry_fw_base);
-
-		sc7entry_end = plat_params->sc7entry_fw_base +
-			       plat_params->sc7entry_fw_size;
-		assert(sc7entry_end < plat_params->tzdram_base - offset);
-
-		/* sc7entry-fw start must be exactly 1MB behind BL31 base */
-		offset = plat_params->tzdram_base - plat_params->sc7entry_fw_base;
 		if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION)) {
-			assert(offset == 0x100000);
+			/* sc7entry-fw must be _before_ r2p payload base */
+			assert(plat_params->tzdram_base >
+			       plat_params->sc7entry_fw_base);
+
+			assert((plat_params->sc7entry_fw_base +
+					plat_params->sc7entry_fw_size) <
+				plat_params->tzdram_base);
+
+			/* sc7entry-fw start must be 1MB behind BL31 base */
+			assert((plat_params->tzdram_base -
+				plat_params->sc7entry_fw_base) == 0x100000);
 		}
 
 		/* power off BPMP processor until SC7 entry */
@@ -346,7 +344,7 @@ void plat_late_platform_setup(void)
 		}
 	}
 
-	if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION) && 
+	if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION) &&
 	     (plat_params->sc7entry_fw_base || plat_params->r2p_payload_base)) {
 		/* secure TZDRAM area, increased by 1MB */
 		tegra_memctrl_tzdram_setup(plat_params->tzdram_base - 0x100000,

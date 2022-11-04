@@ -48,46 +48,19 @@
 #define  R2P_WRITE_IRAM			(0U << 0)
 #define  R2P_READ_IRAM			(1U << 0)
 #define TEGRA_SIP_R2P_DO_REBOOT		U(0xC2FFFE03)
+#define TEGRA_SIP_R2P_SET_CFG		U(0xC2FFFE04)
+
+uint64_t r2p_bcfg[4];
 
 /*******************************************************************************
- * R2P Copy to IRAM SMC implementation
+ * R2P Set Configuration SMC implementation
  ******************************************************************************/
-static int r2p_iram_copy(uint64_t dram_addr, uint64_t iram_addr, uint32_t size, uint32_t flag)
+static int r2p_set_cfg(uint64_t cfg0, uint64_t cfg1, uint64_t cfg2, uint64_t cfg3)
 {
-	volatile uint32_t *src, *dst;
-	uint64_t dram_aligned_addr = TEGRA_ALIGN_DOWN(dram_addr, PAGE_SIZE);
-	uint32_t dram_aligned_size = TEGRA_ALIGN(size + (dram_addr - dram_aligned_addr), PAGE_SIZE);
-
-	/* Error out if invalid or not 32-bit aligned */
-	if (dram_addr < TEGRA_DRAM_BASE || iram_addr < TEGRA_IRAM_BASE ||
-	    (iram_addr + size) > (TEGRA_IRAM_BASE + TEGRA_IRAM_SIZE) ||
-	    dram_addr & 3 || iram_addr & 3 || size & 3) {
-		ERROR("%s: Invalid parameters dst: %x, src: %x, size: %x\n",
-			__func__, (uint32_t)dram_addr, (uint32_t)iram_addr, size);
-
-		return -EINVAL;
-	}
-
-	/* Map source memory region */
-	mmap_add_dynamic_region(dram_aligned_addr,
-							dram_aligned_addr,
-							dram_aligned_size,
-							MT_MEMORY | MT_RW | MT_NS | MT_EXECUTE_NEVER);
-
-	if (flag & R2P_READ_IRAM) {
-		src = (uint32_t *)iram_addr;
-		dst = (uint32_t *)dram_addr;
-	} else {
-		src = (uint32_t *)dram_addr;
-		dst = (uint32_t *)iram_addr;
-	}
-
-	/* Copy payload */
-	(void)memcpy((void *)(uintptr_t)dst, (const void *)src, size);
-
-	/* Flush data and remove source memory region */
-	flush_dcache_range((uintptr_t)dst, size);
-	mmap_remove_dynamic_region(dram_aligned_addr, dram_aligned_size);
+	r2p_bcfg[0] = cfg0;
+	r2p_bcfg[1] = cfg1;
+	r2p_bcfg[2] = cfg2;
+	r2p_bcfg[3] = cfg3;
 
 	return 0;
 }
@@ -96,27 +69,25 @@ static int r2p_iram_copy(uint64_t dram_addr, uint64_t iram_addr, uint32_t size, 
  * This function is responsible for copying default payload if current is empty
  ******************************************************************************/
 
-static void r2p_ensure_payload_exists(const plat_params_from_bl2_t *plat_params)
+static void r2p_prepare_payload(const plat_params_from_bl2_t *plat_params)
 {
-	uint64_t payload_address = TEGRA_IRAM_BASE + TEGRA_IRAM_A_SIZE;
-	uint32_t payload_entry_op = *(uint32_t *)(payload_address);
+	uintptr_t payload_address = TEGRA_IRAM_BASE + TEGRA_IRAM_A_SIZE;
+	uintptr_t payload_bootcfg = payload_address + 0x94;
 
-	if (payload_entry_op == 0) {
-		if(plat_params->r2p_payload_base && plat_params->r2p_payload_size) {
-			WARN("R2P payload is empty! Using default..\n");
+	if (plat_params->r2p_payload_base) {
+		/* Clean up IRAM of any cruft */
+		zeromem((void *)(uintptr_t)TEGRA_IRAM_BASE, TEGRA_IRAM_SIZE);
 
-			/* Clean up IRAM of any cruft */
-			zeromem((void *)(uintptr_t)TEGRA_IRAM_BASE,
-					TEGRA_IRAM_SIZE);
+		/* Copy r2p payload */
+		(void)memcpy((void *)payload_address,
+			     (const void *)(plat_params->r2p_payload_base),
+			     plat_params->r2p_payload_size);
 
-			/* Copy default r2p payload */
-			(void)memcpy((void *)(uintptr_t)payload_address,
-				(const void *)(plat_params->r2p_payload_base),
-				plat_params->r2p_payload_size);
-		} else {
-			ERROR("R2P payload is empty! Rebooting normally..\n");
-			tegra_pmc_system_reset();
-		}
+		/* Copy boot configuration */
+		(void)memcpy((void *)payload_bootcfg, r2p_bcfg, sizeof(r2p_bcfg));
+	} else {
+		ERROR("No R2P payload! Rebooting normally..\n");
+		tegra_pmc_system_reset();
 	}
 }
 
@@ -128,8 +99,8 @@ void r2p_reboot_to_payload()
 	uint32_t val;
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
 
-	/* Make sure we have a payload in place */
-	r2p_ensure_payload_exists(plat_params);
+	/* Place payload and copy boot configuration */
+	r2p_prepare_payload(plat_params);
 
 	/* Set reset type to warmboot */
 	val = tegra_pmc_read_32(PMC_SCRATCH0) | PMC_SCRATCH0_MODE_WARMBOOT;
@@ -151,7 +122,7 @@ void r2p_reboot_to_payload()
 	val &= ~PMC_SECURITY_EN_BIT;
 	mmio_write_32(TEGRA_MISC_BASE + APB_SLAVE_SECURITY_ENABLE, val);
 
-	/* Allow non-secure writes to reset vectors for SC7Exit */
+	/* Allow non-secure writes to reset vectors */
 	plat_secure_cpu_vectors(false);
 
 	tegra_pmc_system_reset();
@@ -223,16 +194,16 @@ int plat_sip_handler(uint32_t smc_fid,
 		} else {
 			return -ENOTSUP;
 		}
-	} else if (smc_fid == TEGRA_SIP_R2P_COPY_TO_IRAM) {
-		if (!tegra_chipid_is_t210_b01())
-			return r2p_iram_copy(x1, x2, x3, x4);
-		else
-			return -ENOTSUP;
-	} else if (smc_fid == TEGRA_SIP_R2P_DO_REBOOT) {
-		if (!tegra_chipid_is_t210_b01())
+	} else if (!tegra_chipid_is_t210_b01()) {
+		if (smc_fid == TEGRA_SIP_R2P_COPY_TO_IRAM) {
+			return  -ENOTSUP;
+		} else if (smc_fid == TEGRA_SIP_R2P_DO_REBOOT) {
 			r2p_reboot_to_payload();
-		else
+		} else if (TEGRA_SIP_R2P_SET_CFG) {
+			return r2p_set_cfg(x1, x2, x3, x4);
+		} else {
 			return -ENOTSUP;
+		}
 	} else {
 		return -ENOTSUP;
 	}
