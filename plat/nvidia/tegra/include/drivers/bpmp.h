@@ -46,19 +46,29 @@
 #define MRQ_CPUIDLE_USAGE	10
 #define MRQ_MODULE_MAIL		11
 #define MRQ_SCX_ENABLE		12
+#define MRQ_CPU_FROZEN		13
 #define MRQ_BPMPIDLE_USAGE	14
 #define MRQ_HEAP_USAGE		15
 #define MRQ_SCLK_SKIP_SET_RATE	16
 #define MRQ_ENABLE_SUSPEND	17
 #define MRQ_PASR_MASK		18
 #define MRQ_DEBUGFS		19
-#define MRQ_THERMAL		27
+#define MRQ_CLK			22
+#define MRQ_QUERY_ABI		23
+#define MRQ_THERMAL		27 /* Not in T210 */
+#define MRQ_CPU_VHINT		28
+#define MRQ_ABI_RATCHET		29
+#define MRQ_EMC_DVFS_LATENCY	31
+#define MRQ_EMC_DVFS_TABLE	32
+#define MRQ_TRACE_ITER		64
 
 /* Tegra PM states as known to BPMP */
+#define TEGRA_PM_CC0		8
 #define TEGRA_PM_CC1		9
 #define TEGRA_PM_CC4		12
 #define TEGRA_PM_CC6		14
 #define TEGRA_PM_CC7		15
+#define TEGRA_PM_SC0		16
 #define TEGRA_PM_SC1		17
 #define TEGRA_PM_SC2		18
 #define TEGRA_PM_SC3		19
