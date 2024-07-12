@@ -295,7 +295,9 @@
 #define TEGRA_SE2_BASE			U(0x70412000)
 #define TEGRA_PKA1_BASE			U(0x70420000)
 #define TEGRA_SE2_RANGE_SIZE		U(0x2000)
+#define TEGRA_SE0_BASE			TEGRA_SE1_BASE
 #define SE_TZRAM_SECURITY		U(0x4)
+#define SE_TZRAM_SETTING_SECURE	U(0x0)
 
 /*******************************************************************************
  * Tegra TZRAM constants

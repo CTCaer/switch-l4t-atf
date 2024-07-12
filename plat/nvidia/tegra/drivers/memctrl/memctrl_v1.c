@@ -91,6 +91,14 @@ void tegra_memctrl_tzdram_setup(uint64_t phys_base, uint32_t size_in_bytes)
 
 	tegra_mc_write_32(MC_SECURITY_CFG0_0, phys_base);
 	tegra_mc_write_32(MC_SECURITY_CFG1_0, size_in_bytes >> 20);
+
+	/* Lock non TZ access to TZRAM */
+	if (TEGRA_TZRAM_BASE == BL31_BASE) {
+		INFO("Configuring TrustZone SRAM Security\n");
+
+		mmio_write_32(TEGRA_SE0_BASE + SE_TZRAM_SECURITY,
+			      SE_TZRAM_SETTING_SECURE);
+	}
 }
 
 static void tegra_clear_videomem(uintptr_t non_overlap_area_start,

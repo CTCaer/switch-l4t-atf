@@ -179,6 +179,8 @@
  * Security Engine related constants
  ******************************************************************************/
 #define TEGRA_SE0_BASE			U(0x03AC0000)
+#define  SE_TZRAM_SECURITY		U(0x4)
+#define  SE_TZRAM_SETTING_SECURE	U(0x0)
 #define  SE0_MUTEX_WATCHDOG_NS_LIMIT	U(0x6C)
 #define  SE0_AES0_ENTROPY_SRC_AGE_CTRL	U(0x2FC)
 #define TEGRA_PKA1_BASE			U(0x03AD0000)
