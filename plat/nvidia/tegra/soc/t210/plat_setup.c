@@ -41,13 +41,14 @@ typedef struct uart_clock
 #define MMIO_RANGE_0_ADDR	0x50000000
 #define MMIO_RANGE_1_ADDR	0x60000000
 #define MMIO_RANGE_2_ADDR	0x70000000
+#define MMIO_RANGE_3_ADDR	0x70400000
 #define MMIO_RANGE_SIZE		0x200000
 
 /*
  * Table of regions to map using the MMU.
  */
 static const mmap_region_t tegra_mmap[] = {
-	MAP_REGION_FLAT(TEGRA_IRAM_BASE, TEGRA_IRAM_SIZE,
+	MAP_REGION_FLAT(TEGRA_IRAM_BASE, MMIO_RANGE_SIZE,
 			MT_DEVICE | MT_RW | MT_SECURE),
 	MAP_REGION_FLAT(MMIO_RANGE_0_ADDR, MMIO_RANGE_SIZE,
 			MT_DEVICE | MT_RW | MT_SECURE),
@@ -63,11 +64,11 @@ static const mmap_region_t tegra_mmap[] = {
  ******************************************************************************/
 const mmap_region_t *plat_get_mmio_map(void)
 {
-	/* Add the map region for security engine SE2 */
+	/* Add the map region for security engine SE2 and PKA1 */
 	if (tegra_chipid_is_t210_b01()) {
-		mmap_add_region((uint64_t)TEGRA_SE2_BASE,
-				(uint64_t)TEGRA_SE2_BASE,
-				(uint64_t)TEGRA_SE2_RANGE_SIZE,
+		mmap_add_region((uint64_t)MMIO_RANGE_3_ADDR,
+				(uint64_t)MMIO_RANGE_3_ADDR,
+				(uint64_t)MMIO_RANGE_SIZE,
 				MT_DEVICE | MT_RW | MT_SECURE);
 	}
 
