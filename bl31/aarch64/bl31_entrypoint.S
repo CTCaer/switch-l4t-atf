@@ -13,6 +13,8 @@
 #include <lib/runtime_instr.h>
 #include <lib/xlat_tables/xlat_mmu_helpers.h>
 
+#define BL31_BASE_FLAG 0x43424550
+
 	.globl	bl31_entrypoint
 	.globl	bl31_warm_entrypoint
 
@@ -23,10 +25,19 @@
 	 */
 
 func bl31_entrypoint
+	b coldboot_entrypoint
+
+	/*
+	 * Store expected base for bootloader usage.
+	 */
+	.word  BL31_BASE_FLAG
+	.dword BL31_BASE
+
 	/* ---------------------------------------------------------------
 	 * Stash the previous bootloader arguments x0 - x3 for later use.
 	 * ---------------------------------------------------------------
 	 */
+coldboot_entrypoint:
 	mov	x20, x0
 	mov	x21, x1
 	mov	x22, x2
