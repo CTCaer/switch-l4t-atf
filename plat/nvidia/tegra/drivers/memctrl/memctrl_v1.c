@@ -96,6 +96,7 @@ void tegra_memctrl_tzdram_setup(uint64_t phys_base, uint32_t size_in_bytes)
 static void tegra_clear_videomem(uintptr_t non_overlap_area_start,
 				 unsigned long long non_overlap_area_size)
 {
+#if PLAT_XLAT_TABLES_DYNAMIC
 	int __attribute__((unused)) ret;
 
 	/*
@@ -113,6 +114,7 @@ static void tegra_clear_videomem(uintptr_t non_overlap_area_start,
 
 	mmap_remove_dynamic_region(non_overlap_area_start,
 		non_overlap_area_size);
+#endif
 }
 
 /*

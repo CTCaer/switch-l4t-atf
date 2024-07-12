@@ -17,6 +17,7 @@ PLAT_LOG_LEVEL_ASSERT	:=	50
 $(eval $(call add_define,PLAT_LOG_LEVEL_ASSERT))
 
 # enable dynamic memory mapping
+# enables boot profiler (and vpr clearing)
 PLAT_XLAT_TABLES_DYNAMIC :=	1
 $(eval $(call add_define,PLAT_XLAT_TABLES_DYNAMIC))
 

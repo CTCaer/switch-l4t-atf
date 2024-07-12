@@ -30,6 +30,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#if PLAT_XLAT_TABLES_DYNAMIC
+
 static uint64_t shmem_base_addr;
 
 #define MAX_PROFILER_RECORDS	U(16)
@@ -142,3 +144,5 @@ void boot_profiler_deinit(void)
 		}
 	}
 }
+
+#endif

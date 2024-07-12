@@ -196,7 +196,7 @@ int plat_sip_handler(uint32_t smc_fid,
 		}
 	} else if (!tegra_chipid_is_t210_b01()) {
 		if (smc_fid == TEGRA_SIP_R2P_COPY_TO_IRAM) {
-			return  -ENOTSUP;
+			return -ENOTSUP;
 		} else if (smc_fid == TEGRA_SIP_R2P_DO_REBOOT) {
 			r2p_reboot_to_payload();
 		} else if (TEGRA_SIP_R2P_SET_CFG) {
