@@ -342,6 +342,22 @@ void bl31_plat_arch_setup(void)
 			code_size,
 			MT_CODE | MT_SECURE);
 
+	/* map r2p payload firmware */
+	if (params_from_bl2->r2p_payload_base) {
+		mmap_add_region(params_from_bl2->r2p_payload_base,
+				params_from_bl2->r2p_payload_base,
+				params_from_bl2->r2p_payload_size,
+				MT_RO_DATA | MT_SECURE);
+	}
+
+	/* map SC7 entry firmware */
+	if (params_from_bl2->sc7entry_fw_base) {
+		mmap_add_region(params_from_bl2->sc7entry_fw_base,
+				params_from_bl2->sc7entry_fw_base,
+				params_from_bl2->sc7entry_fw_size,
+				MT_RO_DATA | MT_SECURE);
+	}
+
 	/* map TZDRAM used by BL31 as coherent memory */
 	if (TEGRA_TZRAM_BASE == tegra_bl31_phys_base) {
 		mmap_add_region(params_from_bl2->tzdram_base,

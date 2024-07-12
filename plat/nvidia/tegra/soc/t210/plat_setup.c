@@ -280,27 +280,17 @@ static const interrupt_prop_t tegra210_interrupt_props[] = {
 void plat_late_platform_setup(void)
 {
 	const plat_params_from_bl2_t *plat_params = bl31_get_plat_params();
-	int __attribute__((unused)) ret;
 	uint32_t val;
 
-	/* memmap TZDRAM area containing the r2p payload firmware */
-	if (plat_params->r2p_payload_base) {
-		/* r2p payload must be _before_ BL31 base */
-		if (!(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION)) {
-			assert(plat_params->tzdram_base >
-			       plat_params->r2p_payload_base);
+	/* r2p payload must be _before_ BL31 base */
+	if (plat_params->r2p_payload_base &&
+	    !(plat_params->flags & TEGRA_PLAT_SC7_NO_BASE_RESTRICTION)) {
+		assert(plat_params->tzdram_base >
+		       plat_params->r2p_payload_base);
 
-			assert((plat_params->r2p_payload_base +
-					plat_params->r2p_payload_size) <
-			       plat_params->tzdram_base);
-		}
-
-		/* memmap r2p payload firmware code */
-		ret = mmap_add_dynamic_region(plat_params->r2p_payload_base,
-					      plat_params->r2p_payload_base,
-					      plat_params->r2p_payload_size,
-					      MT_SECURE | MT_RO_DATA);
-		assert(ret == 0);
+		assert((plat_params->r2p_payload_base +
+		       plat_params->r2p_payload_size) <
+		       plat_params->tzdram_base);
 	}
 
 	/* memmap TZDRAM area containing the SC7 Entry Firmware */
@@ -328,13 +318,6 @@ void plat_late_platform_setup(void)
 
 		/* power off BPMP processor until SC7 entry */
 		tegra_fc_bpmp_off();
-
-		/* memmap SC7 entry firmware code */
-		ret = mmap_add_dynamic_region(plat_params->sc7entry_fw_base,
-					      plat_params->sc7entry_fw_base,
-					      plat_params->sc7entry_fw_size,
-					      MT_SECURE | MT_RO_DATA);
-		assert(ret == 0);
 
 		/* restrict PMC access to secure world */
 		if (!(plat_params->flags & TEGRA_PLAT_PMC_NON_SECURE)) {
